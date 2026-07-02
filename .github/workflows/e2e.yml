@@ -1,0 +1,65 @@
+name: E2E — Real Device
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Platform to test
+        required: true
+        type: choice
+        options:
+          - ios
+          - android
+      app_env:
+        description: Target environment
+        required: true
+        default: qa
+        type: choice
+        options:
+          - qa
+          - production
+      build_url:
+        description: URL to download .ipa or .apk (optional if artifact is pre-staged)
+        required: false
+        type: string
+
+jobs:
+  e2e:
+    name: Run on real device
+    runs-on: self-hosted
+    env:
+      APP_ENV: ${{ inputs.app_env }}
+      MOBILEWRIGHT_DEVICE_ID: ${{ secrets.MOBILEWRIGHT_DEVICE_ID }}
+      MOBILEWRIGHT_IOS_PROVISIONING_PROFILE: ${{ secrets.MOBILEWRIGHT_IOS_PROVISIONING_PROFILE }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download build artifact
+        if: inputs.build_url != ''
+        run: |
+          mkdir -p builds
+          curl -L "${{ inputs.build_url }}" -o builds/app.${{ inputs.platform == 'ios' && 'ipa' || 'apk' }}
+
+      - name: Install Mobilewright agent (iOS)
+        if: inputs.platform == 'ios'
+        run: npm run install:agent
+
+      - name: Run tests
+        run: npm run test:${{ inputs.platform }}
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobilewright-report
+          path: mobilewright-report/
+          if-no-files-found: ignore

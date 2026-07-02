@@ -1,0 +1,31 @@
+{
+  "name": "lac-mobile-qe",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Standalone Mobilewright automation for WurthLAC mobile (iOS & Android real devices)",
+  "type": "module",
+  "scripts": {
+    "test": "mobilewright test",
+    "test:ios": "bash scripts/run-tests.sh ios",
+    "test:android": "bash scripts/run-tests.sh android",
+    "test:report": "mobilewright test --reporter html",
+    "report": "mobilewright show-report",
+    "devices": "mobilewright devices",
+    "doctor": "mobilewright doctor",
+    "setup": "node scripts/verify-setup.mjs",
+    "download:build:ios": "node scripts/download-eas-build.mjs ios",
+    "download:build:android": "node scripts/download-eas-build.mjs android",
+    "install:app:ios": "bash scripts/install-app.sh ios",
+    "install:app:android": "bash scripts/install-app.sh android",
+    "install:agent:ios": "bash scripts/install-agent.sh ios",
+    "install:agent:android": "bash scripts/install-agent.sh android"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@mobilewright/test": "^0.0.46",
+    "mobilewright": "^0.0.46",
+    "typescript": "^5.5.3"
+  }
+}

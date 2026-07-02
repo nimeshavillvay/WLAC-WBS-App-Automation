@@ -1,0 +1,12 @@
+node_modules/
+test-results/
+mobilewright-report/
+playwright-report/
+blob-report/
+builds/*.ipa
+builds/*.apk
+builds/*.aab
+.env
+.env.local
+.DS_Store
+*.mobileprovision
