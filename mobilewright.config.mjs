@@ -13,10 +13,17 @@ const isCi = !!process.env.CI;
 const iosInstallApp = resolveInstallApp("ios");
 const androidInstallApp = resolveInstallApp("android");
 
+// Set MW_NO_LAUNCH=1 to run against an already-running app session without
+// terminating/relaunching it (used for "continue in current session" runs).
+const noLaunch = process.env.MW_NO_LAUNCH === "1";
+
 export default defineConfig({
   testDir: "./tests",
   testMatch: ["**/*.{test,spec}.{js,ts,mjs,mts}"],
-  timeout: 60_000,
+  ...(noLaunch ? { autoAppLaunch: false } : {}),
+  // Real-device app install during fixture setup can be slow; give the whole
+  // test (setup + body) enough headroom to install and launch the build.
+  timeout: 240_000,
   forbidOnly: isCi,
   retries: isCi ? 2 : 0,
   workers: 1,

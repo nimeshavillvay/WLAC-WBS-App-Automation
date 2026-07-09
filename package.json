@@ -15,6 +15,7 @@
     "setup": "node scripts/verify-setup.mjs",
     "download:build:ios": "node scripts/download-eas-build.mjs ios",
     "download:build:android": "node scripts/download-eas-build.mjs android",
+    "download:build:android:latest": "node scripts/download-eas-build.mjs android --latest",
     "install:app:ios": "bash scripts/install-app.sh ios",
     "install:app:android": "bash scripts/install-app.sh android",
     "install:agent:ios": "bash scripts/install-agent.sh ios",

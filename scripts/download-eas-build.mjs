@@ -9,7 +9,9 @@ import { resolveEasArchiveUrl, resolveEasBuildId } from "../config/platform.mjs"
 
 loadEnv();
 
-const platform = (process.argv[2] ?? "ios").toLowerCase();
+const args = process.argv.slice(2);
+const platform = (args[0] ?? "ios").toLowerCase();
+const shouldUseLatest = args.includes("--latest");
 
 if (platform !== "ios" && platform !== "android") {
   throw new Error(`Unknown platform "${platform}". Use ios or android.`);
@@ -20,7 +22,7 @@ const buildsDir = path.join(rootDir, "builds");
 const lacMobileDir =
   process.env.LAC_MOBILE_DIR ?? path.resolve(rootDir, "../apps/lac-mobile");
 const defaults = easBuildDefaults[platform];
-const buildId = resolveEasBuildId(platform) ?? defaults.buildId;
+const resolvedBuildId = resolveEasBuildId(platform) ?? defaults.buildId;
 const outputName = process.env.EAS_BUILD_OUTPUT ?? defaults.output;
 const outputPath = path.join(buildsDir, outputName);
 const installEnvKey =
@@ -42,7 +44,7 @@ function resolveArchiveUrl() {
 
   const json = execFileSync(
     "npx",
-    ["eas-cli@latest", "build:view", buildId, "--json"],
+    ["eas-cli@latest", "build:view", resolveBuildId(), "--json"],
     {
       cwd: lacMobileDir,
       encoding: "utf8",
@@ -60,10 +62,57 @@ function resolveArchiveUrl() {
     build.artifacts?.applicationArchiveUrl ?? build.artifacts?.buildUrl;
 
   if (!url) {
-    throw new Error(`Build ${buildId} has no downloadable artifact.`);
+    throw new Error(`Build ${resolveBuildId()} has no downloadable artifact.`);
   }
 
   return url;
+}
+
+let latestBuildId;
+
+function resolveBuildId() {
+  if (!shouldUseLatest) {
+    return resolvedBuildId;
+  }
+
+  if (latestBuildId) {
+    return latestBuildId;
+  }
+
+  const json = execFileSync(
+    "npx",
+    [
+      "eas-cli@latest",
+      "build:list",
+      "--platform",
+      platform,
+      "--status",
+      "finished",
+      "--limit",
+      "1",
+      "--json",
+    ],
+    {
+      cwd: lacMobileDir,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        EXPO_HOME: process.env.EXPO_HOME ?? "/tmp/expo-home",
+        EXPO_NO_TELEMETRY: "1",
+      },
+      stdio: ["ignore", "pipe", "pipe"],
+    },
+  );
+
+  const [latest] = JSON.parse(json);
+  const buildId = latest?.id;
+
+  if (!buildId) {
+    throw new Error(`No finished ${platform} builds found in Expo.`);
+  }
+
+  latestBuildId = buildId;
+  return latestBuildId;
 }
 
 async function download(url, destination) {
@@ -77,8 +126,9 @@ async function download(url, destination) {
 
 fs.mkdirSync(buildsDir, { recursive: true });
 
+const selectedBuildId = resolveBuildId();
 const archiveUrl = resolveArchiveUrl();
-console.log(`Downloading ${platform} EAS build ${buildId} ...`);
+console.log(`Downloading ${platform} EAS build ${selectedBuildId} ...`);
 console.log(`  → ${outputPath}`);
 
 await download(archiveUrl, outputPath);

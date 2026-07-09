@@ -1,5 +1,6 @@
 import { expect } from "@mobilewright/test";
 import type { Screen } from "@mobilewright/core";
+import { openDrawer } from "./navigation.mjs";
 
 export function getTestCredentials() {
   const email = process.env.TEST_USER_EMAIL;
@@ -34,6 +35,13 @@ export async function login(screen: Screen, email: string, password: string) {
   await expect(screen.getByTestId("sign-in-home-page-button")).not.toBeVisible({
     timeout: 30_000,
   });
+}
+
+export async function logout(screen: Screen) {
+  await openDrawer(screen);
+  await expect(screen.getByText("Log Out")).toBeVisible();
+  await screen.getByText("Log Out").tap();
+  await expect(screen.getByTestId("sign-in-home-page-button")).toBeVisible();
 }
 
 async function tapContinue(screen: Screen) {

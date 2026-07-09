@@ -13,4 +13,9 @@ cd "$ROOT_DIR"
 
 export MOBILEWRIGHT_DEVICE_ID="$(require_device_id "$PLATFORM")"
 
+if [[ "$PLATFORM" == "android" ]]; then
+  echo "Downloading latest Android WLAC build from Expo..."
+  node scripts/download-eas-build.mjs android --latest
+fi
+
 npx mobilewright test --project="$PLATFORM" "$@"
